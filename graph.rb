@@ -1,23 +1,29 @@
+# graph.rb
+# adapted from http://snippets.dzone.com/posts/show/7331
+
 require 'priority_queue'
 require 'set'
 
 # directed, weighted graph
 class Graph
 
+  # is this the best way?
   INFINITY = 1 << 64
 
   def initialize
-    @g = {} # the graph - {node => {edge1 => weight, edge2 => weight}, ...}
+    # adjacency matrix
+    # {<node> => {target => weight}, <node> => {...}}
+    @graph = {}
     @nodes = Set.new
   end
 
   # s= source, t= target, w= weight
   def add_edge(s, t, w)
 
-    if (not @g.has_key? s)
-      @g[s] = {t => w}
+    if (not @graph.has_key? s)
+      @graph[s] = {t => w}
     else
-      @g[s][t] = w
+      @graph[s][t] = w
     end
 
     @nodes.merge [s,t]
@@ -25,9 +31,11 @@ class Graph
   end
 
   # uses Dijkstra's to find shortest paths from source
+  # takes a source node and returns a map of destinations and their shortest
+  # distances
   def shortest_distances( src )
     
-    raise ArgumentError if (not @g.has_key? src)
+    raise ArgumentError if (not @graph.has_key? src)
 
     # keep a priority queue of nodes, ordered by known distances
     distances = CPriorityQueue.new
@@ -36,6 +44,7 @@ class Graph
     }
     distances[src] = 0;
 
+    # results accumulator
     results = {}
 
     while( not distances.empty? ) do
@@ -49,7 +58,7 @@ class Graph
       results[node] = node_dist 
 
       # traverse all neighbors
-      neighbors = @g[node] || {}
+      neighbors = @graph[node] || {}
       neighbors.each { |neighbor, dist|
         # if it's nearer to go by me, update
         neighbor_d = distances[neighbor] || -1    # neighbor may have been found already
